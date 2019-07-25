@@ -227,7 +227,7 @@ export default class Card
         }
     }
 
-    delete()
+    delete(e)
     {
         if (this._cardHTMLElement) {
 
@@ -243,6 +243,7 @@ export default class Card
             }
 
             if (skip) {
+                e.stopPropagation();
                 return;
             }
 
@@ -273,7 +274,7 @@ export default class Card
                 element: 'button',
                 classList: [this.cssClassDeleteIcon],
                 on: {
-                    click: () => this.delete()
+                    click: (e) => this.delete(e)
                 }
             });
         }
