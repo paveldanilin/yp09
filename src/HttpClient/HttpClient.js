@@ -41,6 +41,34 @@ export default class HttpClient
         return 'raw';
     }
 
+    static getRequest(url, options)
+    {
+        const httpClient = new HttpClient();
+
+        return httpClient.fetch(url, options);
+    }
+
+    static postRequest(url, options)
+    {
+        const httpClient = new HttpClient();
+
+        return httpClient.post(url, options);
+    }
+
+    static patchRequest(url, options)
+    {
+        const httpClient = new HttpClient();
+
+        return httpClient.patch(url, options);
+    }
+
+    static deleteRequest(url, options)
+    {
+        const httpClient = new HttpClient();
+
+        return httpClient.delete(url, options);
+    }
+
     fetch(url, options)
     {
         options = options || {};
@@ -80,6 +108,22 @@ export default class HttpClient
         return this.sendRequest(
             url,
             HttpRequest.METHOD_PATCH,
+            options.headers || undefined,
+            options.body || undefined,
+            options.mode || undefined,
+            options.cache || undefined,
+            options.redirect || undefined,
+            options.credentials || undefined,
+            options.responseFormat || undefined);
+    }
+
+    put(url, options)
+    {
+        options = options || {};
+
+        return this.sendRequest(
+            url,
+            HttpRequest.METHOD_PUT,
             options.headers || undefined,
             options.body || undefined,
             options.mode || undefined,

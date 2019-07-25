@@ -9,116 +9,113 @@ import CardCollection from "./CardCollection.js";
 import Profile from './Profile.js';
 import Api from "./Api";
 
-const popupService   = new PopupService();
-const cardCollection = new CardCollection('places');
-const profile        = new Profile('profile', 'Jaques Causteau', 'Sailor, Researcher', popupService);
-
-//console.log(process.env.SLACK_GROUP_ID);
 
 const api = new Api({
     baseUrl: process.env.API_BASE_URL,
     token: process.env.API_TOKEN
 });
 
-/*
-api.getPosts().then((posts) => {
-    const postsContainer = document.getElementById('posts');
-    Array.from(posts).forEach(function(post) {
-        postsContainer.appendChild(post.render());
+const popupService   = new PopupService();
+const cardCollection = new CardCollection('places');
+
+
+const profile = new Profile('TEST', 'TEST', '');
+profile.setPopupService(popupService);
+profile.create('profile');
+
+profile.update = function(newProfile) {
+    return api.updateUserProfile(newProfile);
+};
+
+profile.onAddNewCard = function(name, link) {
+    //console.log(name);
+    const newCard = new Card(name, link, [], true);
+    newCard.setPopupService(popupService);
+
+    return new Promise((resolve, reject) => {
+       api.addCard({
+           name: name,
+           link: link
+       }) .then((addedCard) => {
+           resolve();
+
+           newCard.id = addedCard._id || null;
+           newCard.profileId = profile.id;
+           newCard.owner = addedCard.owner || null;
+
+           newCard.onDelete = function() {
+               if (window.confirm('Are you sure?') === true) {
+                   api.deleteCard(newCard.id);
+               } else {
+                   return false;
+               }
+           };
+
+           newCard.onLike = function() {
+               console.log('like');
+               api.likeCard(newCard.id).then((card) => newCard.likes = card.likes);
+           };
+
+           newCard.onDislike = function() {
+               console.log('dislike');
+               api.dislikeCard(newCard.id).then((card) => newCard.likes = card.likes);
+           };
+
+           cardCollection.add(newCard);
+           cardCollection.render();
+       }).catch(() => reject());
     });
-});
-*/
 
-api.getInitialCards().then((cards) => console.log(cards));
+    // cardCollection.add(newCard);
+    //cardCollection.render();
+};
 
-const initialCards = [
-    {
-        name: 'Архыз',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/arkhyz.jpg'
-    },
-    {
-        name: 'Челябинская область',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/chelyabinsk-oblast.jpg'
-    },
-    {
-        name: 'Иваново',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/ivanovo.jpg'
-    },
-    {
-        name: 'Камчатка',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/kamchatka.jpg'
-    },
-    {
-        name: 'Холмогорский район',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/kholmogorsky-rayon.jpg'
-    },
-    {
-        name: 'Байкал',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/baikal.jpg'
-    },
-    {
-        name: 'Нургуш',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/khrebet-nurgush.jpg'
-    },
-    {
-        name: 'Тулиновка',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/tulinovka.jpg'
-    },
-    {
-        name: 'Остров Желтухина',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/zheltukhin-island.jpg'
-    },
-    {
-        name: 'Владивосток',
-        link: 'https://pictures.s3.yandex.net/frontend-developer/cards-compressed/vladivostok.jpg'
-    }
-];
+api.getUserProfile().then((userData) => {
+    profile.id = userData._id;
+    profile.cohort = userData.cohort;
+    profile.avatar = userData.avatar;
+    profile.name = userData.name;
+    profile.about = userData.about;
 
-initialCards.forEach(function(value) {
-    const newCard = new Card(value.name, value.link, popupService);
-    cardCollection.add(newCard);
+    loadCards();
 });
 
-cardCollection.render();
 
-// Popup handlers
-
-function newPopupProcess(form)
+function loadCards()
 {
-    if (form.new._isValid === false) {
-        return false;
-    }
+    api.getInitialCards().then((cards) => {
+        cards.forEach(function (card) {
+            const newCard = new Card(card.name, card.link, card.likes, card.owner._id === profile.id);
 
-    const link = form.new.link || null;
-    const name = form.new.name || null;
+            //console.log(card);
 
-    if (link && name) {
-        cardCollection.add(new Card(name, link, popupService));
+            newCard.id = card._id || null;
+            newCard.owner = card.owner || null;
+            newCard.profileId = profile.id;
+            newCard.setPopupService(popupService);
+
+            newCard.onDelete = function() {
+                if (window.confirm('Are you sure?') === true) {
+                    api.deleteCard(newCard.id);
+                } else {
+                    return false;
+                }
+            };
+
+            newCard.onLike = function() {
+                console.log('like');
+                api.likeCard(newCard.id).then((card) => newCard.likes = card.likes);
+            };
+
+            newCard.onDislike = function() {
+                console.log('dislike');
+                api.dislikeCard(newCard.id).then((card) => newCard.likes = card.likes);
+            };
+
+            cardCollection.add(newCard);
+        });
+
         cardCollection.render();
-    }
+    });
 
-    return true;
 }
-
-
-function editProfileSave(form)
-{
-    if (form.profile._isValid === false) {
-        return false;
-    }
-
-    const about = form.profile.about || null;
-    const name = form.profile.name || null;
-
-    if (about && name) {
-        profile.name = name;
-        profile.job = about;
-    }
-
-    return true;
-}
-
-// TODO: export to global in order to get access from popup template, must be fixed
-window.newPopupProcess = newPopupProcess;
-
-window.editProfileSave = editProfileSave;

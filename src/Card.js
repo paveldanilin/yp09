@@ -4,13 +4,23 @@ import {random} from './helpers.js';
 
 export default class Card
 {
-    constructor(title, imageUrl, popupService)
+    constructor(title, imageUrl, likes, deletable)
     {
         this.title    = title;
         this.imageUrl = imageUrl;
+        this._likes = likes || [];
+        this._deletable = deletable || false;
+        this._owner = null;
 
-        this.onDelete = null;
+        this._pforileId = null;
 
+        this._onDelete = [];
+        this._onLike = [];
+        this._onDislike = [];
+    }
+
+    setPopupService(popupService)
+    {
         if (popupService instanceof PopupService) {
             this._popupService = popupService;
         } else {
@@ -18,21 +28,31 @@ export default class Card
         }
     }
 
-    static factory(data)
+    set profileId(pid)
     {
-
+        this._pforileId = pid;
     }
 
     set onDelete(newValue)
     {
         if (newValue === null || typeof newValue === 'function') {
-            this._onDelete = newValue;
+            this._onDelete.push(newValue);
         }
     }
 
     get onDelete()
     {
         return this._onDelete;
+    }
+
+    set onLike(func)
+    {
+        this._onLike.push(func);
+    }
+
+    set onDislike(func)
+    {
+        this._onDislike.push(func);
     }
 
     set cssClassCad(newValue)
@@ -105,6 +125,28 @@ export default class Card
         return this._cssClassCardDescription || 'place-card__description';
     }
 
+    set id(id)
+    {
+        this._id = id;
+    }
+
+    get id()
+    {
+        return this._id;
+    }
+
+    set likes(likes)
+    {
+        this._likes = likes;
+
+        document.getElementById(this.getLikesCountId()).textContent = this._likes.length.toString();
+    }
+
+    set owner(owner)
+    {
+        this._owner = owner;
+    }
+
     set title(newValue)
     {
         const type = typeof newValue;
@@ -168,10 +210,19 @@ export default class Card
     like()
     {
         if (this._cardHTMLElement) {
+            const self = this;
             const likeElement = document.getElementById(this.getLikeIconId());
 
             if (likeElement) {
-                likeElement.classList.toggle(this.cssClassLikedIcon);
+                if (likeElement.classList.toggle(this.cssClassLikedIcon)) {
+                    this._onLike.forEach((f) => {
+                        f(self);
+                    });
+                } else {
+                    this._onDislike.forEach((f) => {
+                        f(self);
+                    });
+                }
             }
         }
     }
@@ -179,12 +230,24 @@ export default class Card
     delete()
     {
         if (this._cardHTMLElement) {
+
+            let skip = false;
+
+            for(let i = 0 ; i < this._onDelete.length; i++) {
+                const onDeleteFunc = this._onDelete[i];
+
+                if (onDeleteFunc(this) === false) {
+                    skip = true;
+                    break;
+                }
+            }
+
+            if (skip) {
+                return;
+            }
+
             this._cardHTMLElement.remove();
             this._cardHTMLElement = undefined;
-
-            if (this._onDelete) {
-                this._onDelete(this);
-            }
         }
     }
 
@@ -201,57 +264,98 @@ export default class Card
 
     render()
     {
+        let likesCount = this._likes.length;
+
+        let imgChildren = [];
+
+        if (this._deletable) {
+            imgChildren.push( {
+                element: 'button',
+                classList: [this.cssClassDeleteIcon],
+                on: {
+                    click: () => this.delete()
+                }
+            });
+        }
+
+        let likeIcon = [this.cssClassLikeIcon];
+
+        for(let i = 0 ;i < this._likes.length; i++) {
+            const likeOwner = this._likes[i];
+
+            if (likeOwner._id === this._pforileId) {
+                likeIcon.push(this.cssClassLikedIcon);
+                break;
+            }
+        }
+
+        const elements = [
+            {
+                id: this.getBackgroundId(),
+                element: 'div',
+                classList: [this.cssClassCardImage],
+                style: {
+                    backgroundImage: `url(${this._imageUrl})`,
+                    cursor: 'pointer'
+                },
+                on: {
+                    click: () => this.zoom()
+                },
+                children: imgChildren
+            },
+            {
+                element: 'div',
+                classList: [this.cssClassCardDescription],
+                children: [
+                    {
+                        id: this.getTitleId(),
+                        element: 'h3',
+                        classList: [this.cssClassCardName],
+                        textContent: this._title
+                    },
+                    {
+                        element: 'span',
+                        classList: [],
+                        style: {
+                            'grid-template-column': '1fr',
+                            'grid-row-gap': '3px',
+                            display: 'grid'
+                        },
+                        children: [
+                            {
+                                id: this.getLikeIconId(),
+                                element: 'button',
+                                classList: likeIcon,
+                                on: {
+                                    click: () => this.like()
+                                }
+                            },
+                            {
+                                id: this.getLikesCountId(),
+                                element: 'span',
+                                classList: ['place-card__like-count'],
+                                textContent: likesCount.toString()
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
         // TODO: use BaseWidget instead
         this._cardHTMLElement = HtmlRenderer.render({
             id: this.getId(),
             element: 'div',
             classList: [this.cssClassCard],
-            children: [
-                {
-                    id: this.getBackgroundId(),
-                    element: 'div',
-                    classList: [this.cssClassCardImage],
-                    style: {
-                        backgroundImage: `url(${this._imageUrl})`,
-                        cursor: 'pointer'
-                    },
-                    on: {
-                        click: () => this.zoom()
-                    },
-                    children: [
-                        {
-                            element: 'button',
-                            classList: [this.cssClassDeleteIcon],
-                            on: {
-                                click: () => this.delete()
-                            }
-                        }
-                    ]
-                },
-                {
-                    element: 'div',
-                    classList: [this.cssClassCardDescription],
-                    children: [
-                        {
-                            id: this.getTitleId(),
-                            element: 'h3',
-                            classList: [this.cssClassCardName],
-                            textContent: this._title
-                        },
-                        {
-                            id: this.getLikeIconId(),
-                            element: 'button',
-                            classList: [this.cssClassLikeIcon],
-                            on: {
-                                click: () => this.like()
-                            }
-                        }
-                    ]
-                }
-            ]
+            children: elements
         });
 
         return this._cardHTMLElement;
+    }
+
+    getLikesCountId()
+    {
+        return this.getId() + '_likes-count';
     }
 
     getId()

@@ -24,7 +24,7 @@ export default class Popup
         this._okButton = this._htmlContainerElement.querySelector('[data-popup-ok]');
 
         if (this._okButton) {
-            const dataHandler = this._okButton.getAttribute('data-popup-ok');
+            //const dataHandler = this._okButton.getAttribute('data-popup-ok');
 
             // const popup = this;
             const htmlElement = this._htmlContainerElement;
@@ -53,11 +53,27 @@ export default class Popup
                     })
                 });
 
+                if (popup._onOk) {
+
+                    const popupResult = popup._onOk(inputs);
+
+                    if (popupResult instanceof Promise) {
+                        popupResult.then((result) => {
+                            if (result) {
+                                popup.close();
+                            }
+                        });
+                    } else if (popupResult === true) {
+                        popup.close();
+                    }
+                }
+
+                /*
                 if (typeof window[dataHandler] === 'function') {
                     if (window[dataHandler](inputs) === true) {
                         popup.close();
                     }
-                }
+                }*/
             });
         }
 
@@ -72,11 +88,14 @@ export default class Popup
         });
     }
 
-    set onCancel(newValue)
+    set onCancel(callback)
     {
-        if (typeof newValue === 'function') {
-            this._onCancel = newValue;
-        }
+        this._onCancel = callback;
+    }
+
+    set onOk(callback)
+    {
+        this._onOk = callback;
     }
 
     open()
