@@ -11,6 +11,8 @@ const popupService   = new PopupService();
 const cardCollection = new CardCollection('places');
 const profile        = new Profile('profile', 'Jaques Causteau', 'Sailor, Researcher', popupService);
 
+//console.log(process.env.SLACK_GROUP_ID);
+
 const initialCards = [
     {
         name: 'Архыз',

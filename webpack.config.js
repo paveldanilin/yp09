@@ -1,7 +1,8 @@
-const path                  = require('path');
+const Path                  = require('path');
 const MiniCssExtractPlugin  = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin     = require('html-webpack-plugin');
 const CopyPlugin            = require('copy-webpack-plugin');
+const Dotenv                = require('dotenv-webpack');
 
 module.exports = {
     entry: './src/app.js',
@@ -9,7 +10,7 @@ module.exports = {
     mode: "development",
 
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: Path.resolve(__dirname, 'dist'),
         filename: 'ypt09.js',
         library: "ypt09",
         libraryTarget: "umd",
@@ -18,6 +19,7 @@ module.exports = {
     },
 
     plugins: [
+        new Dotenv(),
         new CopyPlugin([
             { from: './src/templates', to: 'templates' },
         ]),
