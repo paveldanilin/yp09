@@ -1,0 +1,22 @@
+{
+  "name": "p09",
+  "version": "1.0.0",
+  "description": "Yandex praktikum task.09",
+  "main": "ypt09.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js --progress"
+  },
+  "author": "Pavel.Danilin",
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "webpack": "4.35.0",
+    "webpack-cli": "^3.3.4",
+    "babel-loader": "^8.0.6"
+  },
+  "babel": {
+    "presets": [
+      "@babel/env"
+    ]
+  }
+}
