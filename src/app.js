@@ -1,3 +1,4 @@
+import "@babel/polyfill";
 import "./pages/index.css";
 import "./images/logo.svg";
 import "./images/close.svg";
@@ -6,12 +7,29 @@ import Card from './Card.js';
 import PopupService from './PopupService.js';
 import CardCollection from "./CardCollection.js";
 import Profile from './Profile.js';
+import Api from "./Api";
 
 const popupService   = new PopupService();
 const cardCollection = new CardCollection('places');
 const profile        = new Profile('profile', 'Jaques Causteau', 'Sailor, Researcher', popupService);
 
 //console.log(process.env.SLACK_GROUP_ID);
+
+const api = new Api({
+    baseUrl: process.env.API_BASE_URL,
+    token: process.env.API_TOKEN
+});
+
+/*
+api.getPosts().then((posts) => {
+    const postsContainer = document.getElementById('posts');
+    Array.from(posts).forEach(function(post) {
+        postsContainer.appendChild(post.render());
+    });
+});
+*/
+
+api.getInitialCards().then((cards) => console.log(cards));
 
 const initialCards = [
     {

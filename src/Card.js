@@ -18,6 +18,11 @@ export default class Card
         }
     }
 
+    static factory(data)
+    {
+
+    }
+
     set onDelete(newValue)
     {
         if (newValue === null || typeof newValue === 'function') {

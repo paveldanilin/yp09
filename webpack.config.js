@@ -30,7 +30,8 @@ module.exports = {
         }),
         new HtmlWebpackPlugin({
             template: "./src/index.html",
-            hash: true
+            hash: true,
+            inject: false
         }),
     ],
 
